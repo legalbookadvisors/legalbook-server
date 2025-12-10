@@ -7,7 +7,13 @@ dotenv.config();
 
 // Create app FIRST
 const app = express();
-app.use(cors());
+
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type"],
+}));
+
 app.use(express.json({ limit: "10mb" }));
 
 // Gmail SMTP
@@ -21,7 +27,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Test Route
+// Route
 app.post("/api/send-email", async (req, res) => {
   try {
     const { name, email, phone, totalScore, category, sectionScores } = req.body;
@@ -55,11 +61,8 @@ app.post("/api/send-email", async (req, res) => {
   }
 });
 
-
-
-
 // Start server
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log("Mail server running on port", PORT);
 });
