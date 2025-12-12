@@ -18,14 +18,12 @@ app.use(express.json({ limit: "10mb" }));
 const transporter = nodemailer.createTransport({
   host: "smtp.office365.com",
   port: 587,
-  secure: false, 
+  secure: false,
   auth: {
     user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
+    pass: process.env.MAIL_PASS
   },
-  tls: {
-    rejectUnauthorized: false
-  }
+  requireTLS: true
 });
 
 // Email API route
