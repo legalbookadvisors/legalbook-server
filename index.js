@@ -21,9 +21,8 @@ const transporter = nodemailer.createTransport({
   secure: false,
   auth: {
     user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS
+    pass: process.env.MAIL_PASS,
   }
-  
 });
 
 // Email API route
