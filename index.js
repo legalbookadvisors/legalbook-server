@@ -14,15 +14,18 @@ app.use(cors({
 
 app.use(express.json({ limit: "10mb" }));
 
-// Hostinger SMTP transporter
+// Microsoft 365 SMTP
 const transporter = nodemailer.createTransport({
-  host: "smtp.hostinger.com",
-  port: 465,
-  secure: true,
+  host: "smtp.office365.com",
+  port: 587,
+  secure: false, 
   auth: {
     user: process.env.MAIL_USER,
     pass: process.env.MAIL_PASS,
   },
+  tls: {
+    rejectUnauthorized: false
+  }
 });
 
 // Email API route
@@ -59,7 +62,7 @@ app.post("/api/send-email", async (req, res) => {
   }
 });
 
-// Start server (Render requires 0.0.0.0)
+// Start server
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Mail server running on port ${PORT}`);
