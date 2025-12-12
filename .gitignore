@@ -1,3 +1,4 @@
-git add .gitignore
-git commit -m "Fix gitignore to exclude env"
-git push
+.env
+node_modules/
+dist/
+
