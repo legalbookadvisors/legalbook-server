@@ -27,14 +27,14 @@ const transporter = nodemailer.createTransport({
 });
 
 
-/* ✅ VERIFY SMTP PROPERLY */
-transporter.verify()
-  .then(() => {
-    console.log("SMTP ready");
-  })
-  .catch((err) => {
-    console.error("SMTP verify failed:", err);
-  });
+// /* ✅ VERIFY SMTP PROPERLY */
+// transporter.verify()
+//   .then(() => {
+//     console.log("SMTP ready");
+//   })
+//   .catch((err) => {
+//     console.error("SMTP verify failed:", err);
+//   });
 
 /* routes come AFTER verify */
 app.post("/api/send-email", async (req, res) => {
@@ -57,4 +57,6 @@ app.post("/api/send-email", async (req, res) => {
 
 app.listen(process.env.PORT || 4000, () => {
   console.log("Mail server running");
+  console.log("SMTP_USER:", process.env.SMTP_USER ? "✓ Loaded" : "✗ Missing");
+  console.log("SMTP_PASS:", process.env.SMTP_PASS ? "✓ Loaded" : "✗ Missing");
 });
