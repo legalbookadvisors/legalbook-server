@@ -15,14 +15,35 @@ console.log("=============================");
 
 const app = express();
 
-// Restrict CORS to your frontend domains in production
 const allowedOrigins = [
+  // Production URLs
   "https://legalbook.io",
   "https://www.legalbook.io",
+  "https://legalbookadvisors.radhikakabbade.com",
+  "http://legalbookadvisors.radhikakabbade.com",
+  
+  // Development URLs
   "http://localhost:5173",
-  "http://localhost:3000"
+  "http://localhost:3000",
+  "http://localhost:8080",
+  
+  // Render preview URLs (if any)
+  "https://legalbook-server.onrender.com",
+  
+  // For testing
+  "https://reqbin.com",
+  "https://hoppscotch.io"
 ];
+// TEMPORARY FIX - Remove after testing
+app.use(cors({ origin: "*" }));
+console.log("⚠️ WARNING: CORS is open to ALL origins");
 
+// Handle pre-flight requests
+app.options('*', cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl)
@@ -30,10 +51,16 @@ app.use(cors({
     
     if (allowedOrigins.indexOf(origin) === -1) {
       const msg = `CORS policy: ${origin} not allowed`;
+      console.log("CORS blocked:", origin);
       return callback(new Error(msg), false);
     }
+    
+    console.log("CORS allowed:", origin);
     return callback(null, true);
-  }
+  },
+  credentials: false,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json({ limit: "10mb" }));
