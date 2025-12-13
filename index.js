@@ -4,6 +4,14 @@ import axios from "axios"; // ADD THIS LINE
 import dotenv from "dotenv";
 
 dotenv.config();
+// DEBUG: List ALL environment variables (remove after testing)
+console.log("=== ENVIRONMENT VARIABLES ===");
+console.log("PORT:", process.env.PORT);
+console.log("BREVO_API_KEY:", process.env.BREVO_API_KEY ? "SET (first 10 chars): " + process.env.BREVO_API_KEY.substring(0, 10) + "..." : "NOT SET");
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("SMTP_USER:", process.env.SMTP_USER || "NOT SET");
+console.log("SMTP_PASS:", process.env.SMTP_PASS ? "SET (hidden)" : "NOT SET");
+console.log("=============================");
 
 const app = express();
 
