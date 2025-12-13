@@ -17,11 +17,15 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: "9af26b001@smtp-brevo.com",
     pass: process.env.BREVO_SMTP_KEY
-  }
+  },
+  connectionTimeout: 20_000,
+  greetingTimeout: 20_000,
+  socketTimeout: 20_000
 });
 
+
 /* 👇 ADD IT EXACTLY HERE */
-transporter.verify()
+NODE_ENV=production
   .then(() => console.log("SMTP ready"))
   .catch(err => console.error("SMTP verify failed", err));
 
