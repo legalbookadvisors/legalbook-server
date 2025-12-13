@@ -1,62 +1,238 @@
 import express from "express";
 import cors from "cors";
-import nodemailer from "nodemailer";
+import axios from "axios"; // ADD THIS LINE
 import dotenv from "dotenv";
 
 dotenv.config();
 
 const app = express();
 
-app.use(cors({ origin: "*" }));
+// Restrict CORS to your frontend domains in production
+const allowedOrigins = [
+  "https://legalbook.io",
+  "https://www.legalbook.io",
+  "http://localhost:5173",
+  "http://localhost:3000"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `CORS policy: ${origin} not allowed`;
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  }
+}));
+
 app.use(express.json({ limit: "10mb" }));
 
-const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false, // MUST be false for 587
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
-  },
-  tls: {
-    rejectUnauthorized: false
-  },
-  connectionTimeout: 30000,
-  greetingTimeout: 30000,
-  socketTimeout: 30000
+// Health check endpoint for Render monitoring
+app.get("/health", (req, res) => {
+  res.status(200).json({ 
+    status: "healthy", 
+    service: "legalbook-email-api",
+    timestamp: new Date().toISOString()
+  });
 });
 
+// Root endpoint
+app.get("/", (req, res) => {
+  res.send("Legalbook Email API Server is running");
+});
 
-// /* ✅ VERIFY SMTP PROPERLY */
-// transporter.verify()
-//   .then(() => {
-//     console.log("SMTP ready");
-//   })
-//   .catch((err) => {
-//     console.error("SMTP verify failed:", err);
-//   });
-
-/* routes come AFTER verify */
+// Main email endpoint using Brevo API v3
 app.post("/api/send-email", async (req, res) => {
   try {
-    const { name, email, phone, totalScore, category, sectionScores } = req.body;
+    console.log("Received email request:", new Date().toISOString());
+    
+    const { name, email, phone, totalScore, category, sectionScores, company } = req.body;
 
-    await transporter.sendMail({
-      from: '"Legalbook" <no-reply@radhikakabbade.com>',
-      to: "sales@legalbook.io",
-      subject: "New Audit Submission",
-      html: `...`
+    // Validate required fields
+    if (!name || !email || !phone) {
+      return res.status(400).json({ 
+        error: "Missing required fields: name, email, phone" 
+      });
+    }
+
+    // Prepare the email payload for Brevo API
+    const emailData = {
+      sender: {
+        name: "Legalbook",
+        email: "no-reply@radhikakabbade.com" // Must be verified in Brevo
+      },
+      to: [
+        {
+          email: "sales@legalbook.io",
+          name: "Legalbook Sales Team"
+        }
+      ],
+      subject: "New Audit Submission - Legalbook Assessment",
+      htmlContent: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #2563eb; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+            .content { background: #f9fafb; padding: 20px; border-radius: 0 0 8px 8px; }
+            .field { margin-bottom: 12px; }
+            .label { font-weight: bold; color: #4b5563; }
+            .score-box { 
+              background: white; 
+              padding: 15px; 
+              border-radius: 6px; 
+              border-left: 4px solid #2563eb;
+              margin: 15px 0;
+            }
+            .section-scores { 
+              background: white; 
+              padding: 15px; 
+              border-radius: 6px; 
+              margin-top: 10px;
+              font-family: monospace;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h2>📋 New Legal Health Assessment Submission</h2>
+            </div>
+            <div class="content">
+              <div class="field">
+                <span class="label">👤 Name:</span> ${name}
+              </div>
+              ${company ? `<div class="field"><span class="label">🏢 Company:</span> ${company}</div>` : ''}
+              <div class="field">
+                <span class="label">📧 Email:</span> ${email}
+              </div>
+              <div class="field">
+                <span class="label">📱 Phone:</span> ${phone}
+              </div>
+              
+              <div class="score-box">
+                <div class="field">
+                  <span class="label">🏆 Total Score:</span> ${totalScore}/30
+                </div>
+                <div class="field">
+                  <span class="label">📊 Category:</span> <strong>${category}</strong>
+                </div>
+              </div>
+              
+              <div class="field">
+                <span class="label">📈 Section Scores:</span>
+                <div class="section-scores">
+                  ${Object.entries(sectionScores || {})
+                    .map(([section, score]) => 
+                      `<div>• ${section.charAt(0).toUpperCase() + section.slice(1)}: ${score}/5</div>`
+                    ).join('')}
+                </div>
+              </div>
+              
+              <p style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                <small>🕒 Submitted at: ${new Date().toLocaleString()}</small>
+              </p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+      // Optional: Add text version for email clients that don't support HTML
+      textContent: `
+        New Audit Submission
+        --------------------
+        Name: ${name}
+        ${company ? `Company: ${company}` : ''}
+        Email: ${email}
+        Phone: ${phone}
+        Total Score: ${totalScore}/30
+        Category: ${category}
+        
+        Section Scores:
+        ${Object.entries(sectionScores || {})
+          .map(([section, score]) => `  • ${section}: ${score}/5`)
+          .join('\n')}
+        
+        Submitted at: ${new Date().toLocaleString()}
+      `
+    };
+
+    console.log("Sending to Brevo API...");
+    
+    // Send email via Brevo API v3
+    const response = await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      emailData,
+      {
+        headers: {
+          "api-key": process.env.BREVO_API_KEY,
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        timeout: 10000 // 10 second timeout
+      }
+    );
+
+    console.log("Brevo API response:", response.data);
+    
+    res.json({ 
+      success: true, 
+      messageId: response.data.messageId,
+      message: "Email sent successfully"
     });
-
-    res.json({ success: true });
+    
   } catch (err) {
-    console.error("Email error:", err);
-    res.status(500).json({ error: err.message });
+    console.error("❌ Email sending error:", {
+      timestamp: new Date().toISOString(),
+      error: err.message,
+      response: err.response?.data,
+      status: err.response?.status
+    });
+    
+    // Provide helpful error messages
+    let errorMessage = "Failed to send email";
+    let statusCode = 500;
+    
+    if (err.response) {
+      // Brevo API returned an error
+      statusCode = err.response.status;
+      errorMessage = err.response.data?.message || `Brevo API error: ${err.response.status}`;
+      
+      if (err.response.status === 401) {
+        errorMessage = "Invalid API key. Please check BREVO_API_KEY.";
+      } else if (err.response.status === 400) {
+        errorMessage = "Invalid email data. Please check the request format.";
+      } else if (err.response.status === 429) {
+        errorMessage = "Rate limit exceeded. Please try again later.";
+      }
+    } else if (err.code === 'ECONNABORTED') {
+      errorMessage = "Request timeout. Please try again.";
+    }
+    
+    res.status(statusCode).json({ 
+      error: errorMessage,
+      details: err.response?.data || err.message
+    });
   }
 });
 
-app.listen(process.env.PORT || 4000, () => {
-  console.log("Mail server running");
-  console.log("SMTP_USER:", process.env.SMTP_USER ? "✓ Loaded" : "✗ Missing");
-  console.log("SMTP_PASS:", process.env.SMTP_PASS ? "✓ Loaded" : "✗ Missing");
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("Global error:", err);
+  res.status(500).json({ error: "Internal server error" });
+});
+
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`
+  🚀 Legalbook Email API Server started
+  📡 Port: ${PORT}
+  🕐 Time: ${new Date().toISOString()}
+  🔑 API Key loaded: ${process.env.BREVO_API_KEY ? "Yes ✓" : "No ✗"}
+  `);
 });
