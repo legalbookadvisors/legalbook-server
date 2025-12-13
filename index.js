@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
   secure: false,
   auth: {
     user: process.env.SMTP_USER,        // 9af26b001@smtp-brevo.com
-    pass: process.env.BREVO_SMTP_KEY    // SMTP key
+    pass: process.env.SMTP_PASS    // SMTP key
   },
   connectionTimeout: 20000,
   greetingTimeout: 20000,
