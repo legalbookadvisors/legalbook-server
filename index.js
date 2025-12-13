@@ -11,17 +11,21 @@ app.use(cors({ origin: "*" }));
 app.use(express.json({ limit: "10mb" }));
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,          // smtp-relay.brevo.com
-  port: Number(process.env.SMTP_PORT),  // 587
-  secure: false,
+  host: "smtp-relay.brevo.com",
+  port: 587,
+  secure: false, // MUST be false for 587
   auth: {
-    user: process.env.SMTP_USER,        // 9af26b001@smtp-brevo.com
-    pass: process.env.SMTP_PASS    // SMTP key
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
   },
-  connectionTimeout: 20000,
-  greetingTimeout: 20000,
-  socketTimeout: 20000
+  tls: {
+    rejectUnauthorized: false
+  },
+  connectionTimeout: 30000,
+  greetingTimeout: 30000,
+  socketTimeout: 30000
 });
+
 
 /* ✅ VERIFY SMTP PROPERLY */
 transporter.verify()
