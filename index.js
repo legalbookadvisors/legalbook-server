@@ -34,34 +34,34 @@ const allowedOrigins = [
   "https://reqbin.com",
   "https://hoppscotch.io"
 ];
-// TEMPORARY FIX - Remove after testing
+// OPTION A: Allow all origins temporarily (for testing)
 app.use(cors({ origin: "*" }));
-console.log("⚠️ WARNING: CORS is open to ALL origins");
+console.log("⚠️ TEMPORARY: CORS open to ALL origins");
 
-// Handle pre-flight requests
-app.options('*', cors({
-  origin: allowedOrigins,
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
-    if (!origin) return callback(null, true);
+// // Handle pre-flight requests
+// app.options('*', cors({
+//   origin: allowedOrigins,
+//   methods: ['GET', 'POST', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization']
+// }));
+// app.use(cors({
+//   origin: function (origin, callback) {
+//     // Allow requests with no origin (like mobile apps or curl)
+//     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = `CORS policy: ${origin} not allowed`;
-      console.log("CORS blocked:", origin);
-      return callback(new Error(msg), false);
-    }
+//     if (allowedOrigins.indexOf(origin) === -1) {
+//       const msg = `CORS policy: ${origin} not allowed`;
+//       console.log("CORS blocked:", origin);
+//       return callback(new Error(msg), false);
+//     }
     
-    console.log("CORS allowed:", origin);
-    return callback(null, true);
-  },
-  credentials: false,
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+//     console.log("CORS allowed:", origin);
+//     return callback(null, true);
+//   },
+//   credentials: false,
+//   methods: ['GET', 'POST', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization']
+// }));
 
 app.use(express.json({ limit: "10mb" }));
 
