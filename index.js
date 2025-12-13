@@ -11,23 +11,26 @@ app.use(cors({ origin: "*" }));
 app.use(express.json({ limit: "10mb" }));
 
 const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
+  host: process.env.SMTP_HOST,          // smtp-relay.brevo.com
+  port: Number(process.env.SMTP_PORT),  // 587
   secure: false,
   auth: {
-    user: "9af26b001@smtp-brevo.com",
-    pass: process.env.BREVO_SMTP_KEY
+    user: process.env.SMTP_USER,        // 9af26b001@smtp-brevo.com
+    pass: process.env.BREVO_SMTP_KEY    // SMTP key
   },
-  connectionTimeout: 20_000,
-  greetingTimeout: 20_000,
-  socketTimeout: 20_000
+  connectionTimeout: 20000,
+  greetingTimeout: 20000,
+  socketTimeout: 20000
 });
 
-
-/* 👇 ADD IT EXACTLY HERE */
-NODE_ENV=production
-  .then(() => console.log("SMTP ready"))
-  .catch(err => console.error("SMTP verify failed", err));
+/* ✅ VERIFY SMTP PROPERLY */
+transporter.verify()
+  .then(() => {
+    console.log("SMTP ready");
+  })
+  .catch((err) => {
+    console.error("SMTP verify failed:", err);
+  });
 
 /* routes come AFTER verify */
 app.post("/api/send-email", async (req, res) => {
