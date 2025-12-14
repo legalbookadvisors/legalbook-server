@@ -16,24 +16,22 @@ console.log("=============================");
 const app = express();
 
 const allowedOrigins = [
-  // Production URLs
-  "https://legalbook.io",
-  "https://www.legalbook.io",
+  // Your frontend
   "https://legalbookadvisors.radhikakabbade.com",
   "http://legalbookadvisors.radhikakabbade.com",
   
-  // Development URLs
+  // Railway domains
+  "https://legalbook-server-production.up.railway.app",
+  "https://*.up.railway.app",
+  
+  // Local development
   "http://localhost:5173",
-  "http://localhost:3000",
-  "http://localhost:8080",
-  
-  // Render preview URLs (if any)
-  "https://legalbook-server.onrender.com",
-  
-  // For testing
-  "https://reqbin.com",
-  "https://hoppscotch.io"
+  "http://localhost:3000"
 ];
+
+app.use(cors({
+  origin: allowedOrigins
+}));
 // OPTION A: Allow all origins temporarily (for testing)
 app.use(cors({ origin: "*" }));
 console.log("⚠️ TEMPORARY: CORS open to ALL origins");
@@ -42,7 +40,7 @@ console.log("⚠️ TEMPORARY: CORS open to ALL origins");
 // app.options('*', cors({
 //   origin: allowedOrigins,
 //   methods: ['GET', 'POST', 'OPTIONS'],
-//   allowedHeaders: ['Content-Type', 'Authorization']
+//   allowedHeaders: ['Content-Type', 'Authorizati  on']
 // }));
 // app.use(cors({
 //   origin: function (origin, callback) {
@@ -262,12 +260,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
-const PORT = process.env.PORT || 4000;
+// Perfect for Railway + Local
+const PORT = process.env.PORT || 3000; // 4000 for local, Railway provides its own
+
 app.listen(PORT, () => {
-  console.log(`
-  🚀 Legalbook Email API Server started
-  📡 Port: ${PORT}
-  🕐 Time: ${new Date().toISOString()}
-  🔑 API Key loaded: ${process.env.BREVO_API_KEY ? "Yes ✓" : "No ✗"}
-  `);
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`✅ API Key: ${process.env.BREVO_API_KEY ? "Loaded" : "Missing"}`);
 });
